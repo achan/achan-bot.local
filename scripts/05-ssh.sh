@@ -2,6 +2,7 @@
 set -euo pipefail
 
 : "${BOT_USER:?BOT_USER not set — source .env}"
+: "${GITHUB_USER:?GITHUB_USER not set — source .env}"
 
 BOT_HOME="/Users/$BOT_USER"
 
@@ -19,18 +20,28 @@ fi
 sudo -u "$BOT_USER" mkdir -p "$BOT_HOME/.ssh"
 sudo chmod 700 "$BOT_HOME/.ssh"
 
-# Create authorized_keys if it doesn't exist
+# Fetch SSH public keys from GitHub
 AUTH_KEYS="$BOT_HOME/.ssh/authorized_keys"
-if [ ! -f "$AUTH_KEYS" ]; then
-  sudo -u "$BOT_USER" touch "$AUTH_KEYS"
-  sudo chmod 600 "$AUTH_KEYS"
-  echo "Created $AUTH_KEYS"
-  echo ""
-  echo "  >>> Add your public key to $AUTH_KEYS <<<"
-  echo "  From achan.local: ssh-copy-id $BOT_USER@$BOT_HOSTNAME"
-  echo ""
-else
-  echo "authorized_keys already exists."
+GITHUB_KEYS_URL="https://github.com/$GITHUB_USER.keys"
+
+echo "Fetching SSH keys from $GITHUB_KEYS_URL..."
+KEYS=$(curl -fsSL "$GITHUB_KEYS_URL" 2>/dev/null) || {
+  echo "  ERROR: Failed to fetch keys from GitHub for user '$GITHUB_USER'."
+  echo "  Check that GITHUB_USER is correct and you have network access."
+  exit 1
+}
+
+if [ -z "$KEYS" ]; then
+  echo "  ERROR: No SSH keys found for GitHub user '$GITHUB_USER'."
+  exit 1
 fi
+
+KEY_COUNT=$(echo "$KEYS" | wc -l | tr -d ' ')
+echo "  Found $KEY_COUNT key(s) for $GITHUB_USER."
+
+# Write keys (replace each run to stay in sync with GitHub)
+echo "$KEYS" | sudo -u "$BOT_USER" tee "$AUTH_KEYS" > /dev/null
+sudo chmod 600 "$AUTH_KEYS"
+echo "  Wrote $AUTH_KEYS"
 
 echo "SSH configuration complete."

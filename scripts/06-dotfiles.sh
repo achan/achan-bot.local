@@ -2,8 +2,7 @@
 set -euo pipefail
 
 : "${BOT_USER:?BOT_USER not set — source .env}"
-: "${GIT_USER_NAME:?GIT_USER_NAME not set — source .env}"
-: "${GIT_USER_EMAIL:?GIT_USER_EMAIL not set — source .env}"
+: "${GITHUB_USER:?GITHUB_USER not set — source .env}"
 : "${CERT_DIR:?CERT_DIR not set — source .env}"
 : "${CERT_FILE:?CERT_FILE not set — source .env}"
 : "${CERT_KEY_FILE:?CERT_KEY_FILE not set — source .env}"
@@ -33,9 +32,28 @@ deploy_dotfile "$DOTFILES_DIR/zshrc"    "$BOT_HOME/.zshrc"
 deploy_dotfile "$DOTFILES_DIR/gitconfig" "$BOT_HOME/.gitconfig"
 deploy_dotfile "$DOTFILES_DIR/tmux.conf" "$BOT_HOME/.tmux.conf"
 
-# Set git identity for the bot user
-sudo -u "$BOT_USER" git config --global user.name "$GIT_USER_NAME"
-sudo -u "$BOT_USER" git config --global user.email "$GIT_USER_EMAIL"
+# Fetch git identity from GitHub API
+echo "Fetching git identity from GitHub for '$GITHUB_USER'..."
+GH_API=$(curl -fsSL "https://api.github.com/users/$GITHUB_USER" 2>/dev/null) || {
+  echo "  WARNING: Could not fetch GitHub profile. Set git identity manually."
+  GH_API=""
+}
+
+if [ -n "$GH_API" ]; then
+  GIT_NAME=$(echo "$GH_API" | grep '"name"' | head -1 | sed 's/.*: "\(.*\)".*/\1/')
+  GH_ID=$(echo "$GH_API" | grep '"id"' | head -1 | sed 's/[^0-9]//g')
+
+  # GitHub noreply email: <id>+<username>@users.noreply.github.com
+  GIT_EMAIL="${GH_ID}+${GITHUB_USER}@users.noreply.github.com"
+
+  if [ -n "$GIT_NAME" ]; then
+    sudo -u "$BOT_USER" git config --global user.name "$GIT_NAME"
+    echo "  git user.name = $GIT_NAME"
+  fi
+
+  sudo -u "$BOT_USER" git config --global user.email "$GIT_EMAIL"
+  echo "  git user.email = $GIT_EMAIL"
+fi
 
 # Write .botenv with cert paths (sourced by .zshrc)
 BOTENV="$BOT_HOME/.botenv"

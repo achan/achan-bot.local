@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-USERNAME="claude"
+: "${BOT_USER:?BOT_USER not set — source .env}"
 
 # Ensure brew is on PATH
 if [ -f /opt/homebrew/bin/brew ]; then
@@ -10,7 +10,7 @@ elif [ -f /usr/local/bin/brew ]; then
   eval "$(/usr/local/bin/brew shellenv)"
 fi
 
-echo "Verifying dev environment for '$USERNAME'..."
+echo "Verifying dev environment for '$BOT_USER'..."
 
 # Check Claude Code
 if command -v claude &>/dev/null; then

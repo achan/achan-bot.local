@@ -5,6 +5,11 @@ elif [ -f /usr/local/bin/brew ]; then
   eval "$(/usr/local/bin/brew shellenv)"
 fi
 
+# Load bot environment (cert paths, etc.) written by setup.sh
+if [ -f "$HOME/.botenv" ]; then
+  source "$HOME/.botenv"
+fi
+
 # History
 HISTSIZE=10000
 SAVEHIST=10000
@@ -20,7 +25,3 @@ alias ll='ls -lah'
 alias gs='git status'
 alias gw='git worktree'
 alias gwl='git worktree list'
-
-# mkcert cert locations (for app servers)
-export LOCALHOST_CERT="$HOME/.local/share/mkcert/localhost.pem"
-export LOCALHOST_KEY="$HOME/.local/share/mkcert/localhost-key.pem"

@@ -1,26 +1,30 @@
 # achan-bot.local — Mac Mini Setup (IaC)
 
-Provision a Mac mini so the admin user can run Claude Code on the web,
-which SSHes into a dedicated non-admin `claude` user.
+Provision a Mac mini (achan-bot.local) as a dev/server box.
+You SSH in from your main machine (achan.local), work in tmux,
+and run app servers that you test from achan.local's browser.
 
 ## Workflow
 
 ```
-┌──────────────┐       SSH        ┌──────────────────────┐
-│  Browser      │ ──────────────→ │  Mac mini             │
-│  Claude Code  │                 │                       │
-│  on the web   │                 │  claude@mac-mini      │
-└──────────────┘                  │  (non-admin user)     │
-                                  └──────────────────────┘
+┌──────────────────┐     SSH      ┌───────────────────────────┐
+│  achan.local      │ ──────────→ │  achan-bot.local (Mac mini)│
+│  (your machine)   │             │                            │
+│                   │   browser   │  claude@achan-bot.local     │
+│  test apps here ←─┼─────────── │  tmux, app servers, claude  │
+└──────────────────┘  http/ports  └───────────────────────────┘
 
-You (admin) run ./setup.sh once on the Mac mini.
-Claude Code on the web connects as the 'claude' user via SSH.
+1. Admin runs ./setup.sh once on the Mac mini
+2. SSH in: ssh claude@achan-bot.local
+3. Work in tmux, run app servers
+4. Test from achan.local browser (http://achan-bot.local:PORT)
 ```
 
 ## Goals
 
 - One command (`./setup.sh`) run by the admin user sets everything up
-- Creates a non-admin `claude` user for Claude Code to SSH into
+- Creates a non-admin `claude` user for day-to-day SSH work
+- tmux-first workflow for persistent sessions
 - Idempotent — safe to re-run
 - Minimal dependencies (only what ships with macOS)
 
@@ -39,8 +43,9 @@ achan-bot.local/
 │   ├── 06-dotfiles.sh        # Deploy dotfiles for claude user
 │   └── 07-dev-env.sh         # Dev tools (Node.js, Claude Code CLI)
 ├── dotfiles/
-│   ├── zshrc
+│   ├── zshrc                 # Shell config (PATH, aliases, auto-tmux)
 │   ├── gitconfig
+│   ├── tmux.conf             # tmux configuration
 │   └── ssh_config
 └── config/
     └── sshd_config.d/        # Drop-in sshd config
@@ -75,10 +80,11 @@ Create the `claude` user and open SSH access.
 
 ### Phase 3 — Environment (scripts 06–07)
 
-Configure the `claude` user's environment so Claude Code works out of the box.
+Configure the `claude` user's environment for daily work.
 
 6. **Dotfiles** — Copy into `/Users/claude`:
    - `.zshrc` — PATH (include Homebrew), aliases, prompt
+   - `.tmux.conf` — tmux config (sensible defaults, status bar)
    - `.gitconfig` — name, email, default branch
    - `.ssh/config` — outbound SSH config if needed
 7. **Dev environment** (run as `claude` user via `sudo -u claude`)
@@ -89,17 +95,20 @@ Configure the `claude` user's environment so Claude Code works out of the box.
 ## Usage
 
 ```bash
-# 1. On your Mac mini, logged in as your admin user:
+# 1. On achan-bot.local, logged in as your admin user:
 git clone <this-repo>
 cd achan-bot.local
 ./setup.sh
 
-# 2. From your browser:
-#    Use Claude Code on the web, pointed at claude@<mac-mini-ip>
+# 2. From achan.local, SSH in:
+ssh claude@achan-bot.local
 
-# 3. Or test manually:
-ssh claude@localhost
-claude --version
+# 3. Start working in tmux:
+tmux new -s dev
+# run app servers, claude, etc.
+
+# 4. Test from achan.local:
+#    open http://achan-bot.local:3000 (or whatever port)
 ```
 
 ## Design Decisions
@@ -109,9 +118,10 @@ claude --version
 | Bash scripts, not Ansible/Nix | Zero dependencies on a fresh Mac; macOS ships bash/zsh |
 | Numbered scripts | Clear execution order; easy to run one step at a time |
 | Idempotent checks | Each script checks state before acting (no double-installs) |
-| Non-admin `claude` user | Least privilege — Claude Code doesn't need admin |
+| Non-admin `claude` user | Least privilege for daily work |
 | Brewfile | Declarative, diffable, version-controllable package list |
-| Admin runs setup, claude user is the target | Clean separation of provisioning vs. runtime |
+| tmux-first | Persistent sessions survive SSH disconnects |
+| Admin runs setup, claude user works | Clean separation of provisioning vs. runtime |
 
 ## Open Questions
 
@@ -119,3 +129,4 @@ claude --version
 - [ ] Any additional Homebrew packages needed?
 - [ ] Firewall rules (beyond SSH)?
 - [ ] Automatic updates (Homebrew, macOS)?
+- [ ] tmux auto-attach on SSH login?

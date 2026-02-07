@@ -2,35 +2,42 @@
 
 Provision a Mac mini (achan-bot.local) as a multi-project dev/server box.
 You SSH in from achan.local, work across multiple projects and worktrees,
-run app servers in tmux, and test from achan.local's browser.
+run app servers in tmux, and test from achan.local's browser via SSH tunnels.
 
 ## Workflow
 
 ```
-┌──────────────────┐     SSH      ┌──────────────────────────────────┐
-│  achan.local      │ ──────────→ │  achan-bot.local (Mac mini)       │
-│  (your machine)   │             │                                   │
-│                   │   browser   │  claude@achan-bot.local            │
-│  test apps here ←─┼─────────── │                                   │
-│                   │  :3000      │  project-a server                  │
-│                   │  :3001      │  project-a feature branch server   │
-│                   │  :4000      │  project-b server                  │
-└──────────────────┘  (ports)    └──────────────────────────────────┘
+┌──────────────────────┐  SSH tunnel   ┌──────────────────────────────┐
+│  achan.local          │ ───────────→ │  achan-bot.local (Mac mini)   │
+│  (your machine)       │              │                               │
+│                       │              │  claude@achan-bot.local        │
+│  browser:             │  tunneled    │                               │
+│  https://localhost:3000├─────────────│  app server :3000              │
+│  https://localhost:3001├─────────────│  app server :3001              │
+│  https://localhost:4000├─────────────│  app server :4000              │
+└──────────────────────┘              └──────────────────────────────┘
 
 1. Admin runs ./setup.sh once on the Mac mini
-2. SSH in: ssh claude@achan-bot.local
+2. SSH in with tunnels: ssh -L 3000:localhost:3000 ... claude@achan-bot.local
 3. Work in tmux, multiple projects, multiple worktrees
-4. Test from achan.local browser (http://achan-bot.local:PORT)
+4. Test from achan.local browser (https://localhost:PORT)
 ```
+
+Browser APIs (camera, mic, WebUSB, etc.) require a secure context.
+SSH tunnels encrypt transport but the browser still sees `http://localhost`.
+We use **mkcert** to generate locally-trusted certs for `localhost` so
+app servers can serve HTTPS and satisfy secure context requirements.
 
 ## Goals
 
 - One command (`./setup.sh`) run by the admin user sets everything up
 - Creates a non-admin `claude` user for day-to-day SSH work
+- HTTPS via mkcert localhost certs (secure context for browser device APIs)
+- SSH tunnels for access from achan.local — no exposing ports on the network
 - Multiple projects with multiple worktrees running app servers on different ports
 - tmux for persistent sessions
 - Idempotent — safe to re-run
-- Minimal dependencies (only what ships with macOS)
+- Minimal dependencies (only what ships with macOS + Homebrew)
 
 ## Project Structure
 
@@ -45,7 +52,8 @@ achan-bot.local/
 │   ├── 04-create-user.sh     # Create non-admin 'claude' user
 │   ├── 05-ssh.sh             # Enable Remote Login, configure for claude user
 │   ├── 06-dotfiles.sh        # Deploy dotfiles for claude user
-│   └── 07-dev-env.sh         # Dev tools (Node.js, Claude Code CLI)
+│   ├── 07-dev-env.sh         # Dev tools (Node.js, Claude Code CLI)
+│   └── 08-mkcert.sh          # Generate localhost TLS certs for claude user
 ├── dotfiles/
 │   ├── zshrc                 # Shell config (PATH, aliases)
 │   ├── gitconfig             # Git config
@@ -65,7 +73,7 @@ Run as the admin user. Installs system-level tooling.
 3. **Brewfile** — Declarative package list:
    - CLI: `git`, `gh`, `jq`, `curl`, `wget`, `tmux`, `neovim`, `ripgrep`, `fd`
    - Runtimes: `node` (required for Claude Code)
-   - Casks: as needed
+   - TLS: `mkcert`, `nss` (for cert trust)
 
 ### Phase 2 — User & Access (scripts 04–05)
 
@@ -82,7 +90,7 @@ Create the `claude` user and open SSH access.
    - Allow the `claude` user to connect via SSH
    - Deploy authorized_keys for the `claude` user
 
-### Phase 3 — Environment (scripts 06–07)
+### Phase 3 — Environment (scripts 06–08)
 
 Configure the `claude` user's environment.
 
@@ -94,6 +102,25 @@ Configure the `claude` user's environment.
    - Install Claude Code (`npm install -g @anthropic-ai/claude-code`)
    - Verify tools work
    - Ensure Homebrew-installed tools are on PATH
+8. **mkcert setup** (run as `claude` user)
+   - `mkcert -install` (install local CA)
+   - `mkcert localhost 127.0.0.1 ::1` (generate cert + key)
+   - Store certs in `~/.local/share/mkcert/` (or similar well-known path)
+   - App servers reference these certs to serve HTTPS
+
+### Manual step on achan.local (one-time)
+
+To trust the certs in your browser on achan.local, copy the CA root cert
+from achan-bot.local and install it:
+
+```bash
+# From achan.local:
+scp claude@achan-bot.local:~/.local/share/mkcert/rootCA.pem /tmp/
+# Then install it in your system keychain / browser trust store
+```
+
+This is a one-time step. After this, `https://localhost:*` via SSH tunnels
+is trusted by your browser.
 
 ## Usage
 
@@ -103,15 +130,16 @@ git clone <this-repo>
 cd achan-bot.local
 ./setup.sh
 
-# 2. From achan.local, SSH in:
-ssh claude@achan-bot.local
+# 2. From achan.local, SSH in with port forwarding:
+ssh -L 3000:localhost:3000 -L 3001:localhost:3001 -L 4000:localhost:4000 \
+    claude@achan-bot.local
 
-# 3. Work in tmux, clone projects, use worktrees as each project defines.
-#    App servers bind to various ports.
+# 3. Work in tmux, clone projects, run app servers with HTTPS:
+#    App servers use the mkcert localhost certs to serve HTTPS.
 
-# 4. Test from achan.local:
-#    http://achan-bot.local:3000
-#    http://achan-bot.local:4000
+# 4. Test from achan.local browser:
+#    https://localhost:3000
+#    https://localhost:4000
 #    etc.
 ```
 
@@ -124,6 +152,8 @@ ssh claude@achan-bot.local
 | Idempotent checks | Each script checks state before acting (no double-installs) |
 | Non-admin `claude` user | Least privilege for daily work |
 | Brewfile | Declarative, diffable, version-controllable package list |
+| SSH tunnels | Encrypted access without exposing ports on the network |
+| mkcert for localhost | Browser secure context for device APIs (camera, mic, etc.) |
 | No worktree tooling here | Each project brings its own worktree conventions |
 | tmux | Persistent sessions survive SSH disconnects |
 

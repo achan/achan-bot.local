@@ -52,7 +52,7 @@ achan-bot.local/
 │   ├── 04-create-user.sh     # Create non-admin 'claude' user
 │   ├── 05-ssh.sh             # Enable Remote Login, configure for claude user
 │   ├── 06-dotfiles.sh        # Deploy dotfiles for claude user
-│   ├── 07-dev-env.sh         # Dev tools (Node.js, Claude Code CLI)
+│   ├── 07-dev-env.sh         # Verify tools, PATH setup
 │   └── 08-mkcert.sh          # Generate localhost TLS certs for claude user
 ├── dotfiles/
 │   ├── zshrc                 # Shell config (PATH, aliases)
@@ -72,8 +72,9 @@ Run as the admin user. Installs system-level tooling.
 2. **Homebrew** — Install if missing, update if present
 3. **Brewfile** — Declarative package list:
    - CLI: `git`, `gh`, `jq`, `curl`, `wget`, `tmux`, `neovim`, `ripgrep`, `fd`
-   - Runtimes: `node` (required for Claude Code)
+   - Casks: `claude-code`
    - TLS: `mkcert`, `nss` (for cert trust)
+   - Runtimes: none — managed per-project
 
 ### Phase 2 — User & Access (scripts 04–05)
 
@@ -99,9 +100,10 @@ Configure the `claude` user's environment.
    - `.tmux.conf` — sensible defaults, status bar
    - `.gitconfig` — name, email, default branch
 7. **Dev environment** (run as `claude` user via `sudo -u claude`)
-   - Install Claude Code (`npm install -g @anthropic-ai/claude-code`)
-   - Verify tools work
+   - Claude Code already installed via Brewfile (`brew install --cask claude-code`)
+   - Verify `claude` command works
    - Ensure Homebrew-installed tools are on PATH
+   - Runtimes (node, ruby, etc.) are managed per-project, not installed globally
 8. **mkcert setup** (run as `claude` user)
    - `mkcert -install` (install local CA)
    - `mkcert localhost 127.0.0.1 ::1` (generate cert + key)

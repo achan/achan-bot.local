@@ -1,0 +1,27 @@
+# Homebrew
+if [ -f /opt/homebrew/bin/brew ]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -f /usr/local/bin/brew ]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
+
+# Load bot environment (cert paths, etc.) written by setup.sh
+if [ -f "$HOME/.botenv" ]; then
+  source "$HOME/.botenv"
+fi
+
+# History
+HISTSIZE=10000
+SAVEHIST=10000
+HISTFILE=~/.zsh_history
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_DUPS
+
+# Prompt — shows user@host and current directory
+PS1='%F{green}%n@%m%f:%F{blue}%~%f$ '
+
+# Aliases
+alias ll='ls -lah'
+alias gs='git status'
+alias gw='git worktree'
+alias gwl='git worktree list'

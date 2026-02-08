@@ -47,11 +47,11 @@ if [ -n "$GH_API" ]; then
   GIT_EMAIL="${GH_ID}+${GITHUB_USER}@users.noreply.github.com"
 
   if [ -n "$GIT_NAME" ]; then
-    sudo -u "$BOT_USER" git config --global user.name "$GIT_NAME"
+    sudo -u "$BOT_USER" HOME="$BOT_HOME" git config --global user.name "$GIT_NAME"
     echo "  git user.name = $GIT_NAME"
   fi
 
-  sudo -u "$BOT_USER" git config --global user.email "$GIT_EMAIL"
+  sudo -u "$BOT_USER" HOME="$BOT_HOME" git config --global user.email "$GIT_EMAIL"
   echo "  git user.email = $GIT_EMAIL"
 fi
 

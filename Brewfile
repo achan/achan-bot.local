@@ -9,9 +9,6 @@ brew "neovim"
 brew "ripgrep"
 brew "fd"
 
-# TLS for local dev
-brew "mkcert"
-brew "nss"
 
 # Claude Code
 cask "claude-code"

@@ -20,7 +20,7 @@ else
 fi
 
 # Check key tools
-for tool in git gh tmux nvim rg fd jq mkcert; do
+for tool in git gh tmux nvim rg fd jq; do
   if command -v "$tool" &>/dev/null; then
     echo "  $tool: OK"
   else

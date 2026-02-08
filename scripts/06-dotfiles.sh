@@ -24,13 +24,16 @@ deploy_dotfile() {
     sudo -u "$BOT_USER" cp "$dest" "${dest}.bak"
   fi
 
-  sudo -u "$BOT_USER" ln -sf "$src" "$dest"
-  echo "  Linked $dest -> $src"
+  # Remove any existing symlink before copying
+  sudo rm -f "$dest"
+  sudo cp "$src" "$dest"
+  sudo chown "$BOT_USER":staff "$dest"
+  echo "  Copied $dest from $src"
 }
 
-deploy_dotfile "$DOTFILES_DIR/zshrc"    "$BOT_HOME/.zshrc"
-deploy_dotfile "$DOTFILES_DIR/gitconfig" "$BOT_HOME/.gitconfig"
-deploy_dotfile "$DOTFILES_DIR/tmux.conf" "$BOT_HOME/.tmux.conf"
+deploy_dotfile "$DOTFILES_DIR/zshrc"     "$BOT_HOME/.zshrc"
+deploy_dotfile "$DOTFILES_DIR/gitconfig"  "$BOT_HOME/.gitconfig"
+deploy_dotfile "$DOTFILES_DIR/tmux.conf"  "$BOT_HOME/.tmux.conf"
 
 # Fetch git identity from GitHub API
 echo "Fetching git identity from GitHub for '$GITHUB_USER'..."

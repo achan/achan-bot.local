@@ -37,7 +37,14 @@ else
   echo "Added '$BOT_USER' to staff group."
 fi
 
-# Create workspace directory
+# Create home and workspace directories
 BOT_HOME="/Users/$BOT_USER"
+if [ ! -d "$BOT_HOME" ]; then
+  sudo mkdir -p "$BOT_HOME"
+  sudo chown "$BOT_USER":staff "$BOT_HOME"
+  sudo chmod 750 "$BOT_HOME"
+  echo "Home directory created: $BOT_HOME/"
+fi
+
 sudo -u "$BOT_USER" mkdir -p "$BOT_HOME/$WORKSPACE_DIR"
 echo "Workspace directory ready: $BOT_HOME/$WORKSPACE_DIR/"

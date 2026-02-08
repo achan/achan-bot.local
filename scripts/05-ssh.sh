@@ -50,4 +50,12 @@ echo "$KEYS" | sudo -u "$BOT_USER" tee "$AUTH_KEYS" > /dev/null
 sudo chmod 600 "$AUTH_KEYS"
 echo "  Wrote $AUTH_KEYS"
 
+# Grant SSH access (macOS restricts login to com.apple.access_ssh members)
+if sudo dseditgroup -o checkmember -m "$BOT_USER" com.apple.access_ssh &>/dev/null; then
+  echo "User '$BOT_USER' already has SSH access."
+else
+  sudo dseditgroup -o edit -a "$BOT_USER" -t user com.apple.access_ssh
+  echo "Added '$BOT_USER' to com.apple.access_ssh."
+fi
+
 echo "SSH configuration complete."

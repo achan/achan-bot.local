@@ -29,14 +29,6 @@ sudo chmod 700 "$SSH_DIR"
 
 if [ -f "$KEY_FILE" ]; then
   echo "SSH key already exists at $KEY_FILE — skipping."
-elif [ -n "${BOT_SSH_PRIVATE_KEY:-}" ]; then
-  echo "Installing SSH keypair from BOT_SSH_PRIVATE_KEY..."
-  echo "$BOT_SSH_PRIVATE_KEY" | sudo -u "$BOT_USER" tee "$KEY_FILE" > /dev/null
-  sudo chmod 600 "$KEY_FILE"
-  # Derive public key from private key
-  sudo ssh-keygen -y -f "$KEY_FILE" | sudo -u "$BOT_USER" tee "$KEY_FILE.pub" > /dev/null
-  sudo chmod 644 "$KEY_FILE.pub"
-  echo "SSH keypair installed from env var."
 else
   sudo -u "$BOT_USER" ssh-keygen -t ed25519 -C "$GITHUB_USER" -f "$KEY_FILE" -N ""
   echo "SSH keypair generated."

@@ -32,8 +32,14 @@ KEYS=$(curl -fsSL "$GITHUB_KEYS_URL" 2>/dev/null) || {
 }
 
 if [ -z "$KEYS" ]; then
-  echo "  ERROR: No SSH keys found for GitHub user '$GITHUB_USER'."
-  exit 1
+  if [ -n "${BOT_SSH_PUBLIC_KEY:-}" ]; then
+    echo "  No keys on GitHub — using BOT_SSH_PUBLIC_KEY from .env."
+    KEYS="$BOT_SSH_PUBLIC_KEY"
+  else
+    echo "  ERROR: No SSH keys found for GitHub user '$GITHUB_USER'"
+    echo "  and BOT_SSH_PUBLIC_KEY is not set in .env."
+    exit 1
+  fi
 fi
 
 KEY_COUNT=$(echo "$KEYS" | wc -l | tr -d ' ')

@@ -29,12 +29,7 @@ else
   echo "Remote Login (SSH) enabled."
 fi
 
-# Set up SSH directory for bot user
-sudo -u "$BOT_USER" mkdir -p "$BOT_HOME/.ssh"
-sudo chmod 700 "$BOT_HOME/.ssh"
-
 # Fetch SSH public keys from GitHub
-AUTH_KEYS="$BOT_HOME/.ssh/authorized_keys"
 GITHUB_KEYS_URL="https://github.com/$GITHUB_USER.keys"
 
 echo "Fetching SSH keys from $GITHUB_KEYS_URL..."
@@ -58,17 +53,21 @@ fi
 KEY_COUNT=$(echo "$KEYS" | wc -l | tr -d ' ')
 echo "  Found $KEY_COUNT key(s) for $GITHUB_USER."
 
-# Write keys (replace each run to stay in sync with GitHub)
-echo "$KEYS" | sudo -u "$BOT_USER" tee "$AUTH_KEYS" > /dev/null
-sudo chmod 600 "$AUTH_KEYS"
-echo "  Wrote $AUTH_KEYS"
+# Set up SSH directory and authorized_keys for bot user
+echo "Setting up SSH keys for '$BOT_USER'..."
+sudo -u "$BOT_USER" mkdir -p "$BOT_HOME/.ssh"
+sudo chmod 700 "$BOT_HOME/.ssh"
+echo "$KEYS" | sudo tee "$BOT_HOME/.ssh/authorized_keys" > /dev/null
+sudo chown "$BOT_USER" "$BOT_HOME/.ssh/authorized_keys"
+sudo chmod 600 "$BOT_HOME/.ssh/authorized_keys"
+echo "  Wrote $BOT_HOME/.ssh/authorized_keys"
 
 # Grant SSH access (macOS restricts login to com.apple.access_ssh members)
 if sudo dseditgroup -o checkmember -m "$BOT_USER" com.apple.access_ssh &>/dev/null; then
-  echo "User '$BOT_USER' already has SSH access."
+  echo "  '$BOT_USER' already has SSH access."
 else
   sudo dseditgroup -o edit -a "$BOT_USER" -t user com.apple.access_ssh
-  echo "Added '$BOT_USER' to com.apple.access_ssh."
+  echo "  Added '$BOT_USER' to com.apple.access_ssh."
 fi
 
 echo "SSH configuration complete."

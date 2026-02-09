@@ -68,4 +68,17 @@ if [ -n "$GH_API" ]; then
   echo "  git user.email = $GIT_EMAIL"
 fi
 
+# Install Ghostty terminfo if available (fixes key handling over SSH from Ghostty)
+GHOSTTY_TERMINFO="/Applications/Ghostty.app/Contents/Resources/terminfo"
+if [ -d "$GHOSTTY_TERMINFO" ]; then
+  echo "Installing Ghostty terminfo..."
+  sudo -u "$BOT_USER" mkdir -p "$BOT_HOME/.terminfo"
+  sudo cp -r "$GHOSTTY_TERMINFO"/* "$BOT_HOME/.terminfo/"
+  sudo chown -R "$BOT_USER":staff "$BOT_HOME/.terminfo"
+  echo "  Ghostty terminfo installed."
+else
+  echo "  Ghostty not found — skipping terminfo install."
+  echo "  (SSH from Ghostty will fall back to xterm-256color.)"
+fi
+
 echo "Dotfiles deployed."

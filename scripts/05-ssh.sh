@@ -29,29 +29,43 @@ else
   echo "Remote Login (SSH) enabled."
 fi
 
-# Fetch SSH public keys from GitHub
-GITHUB_KEYS_URL="https://github.com/$GITHUB_USER.keys"
+# Fetch SSH public keys from GitHub for bot user
+KEYS=""
 
-echo "Fetching SSH keys from $GITHUB_KEYS_URL..."
-KEYS=$(curl -fsSL "$GITHUB_KEYS_URL" 2>/dev/null) || {
-  echo "  ERROR: Failed to fetch keys from GitHub for user '$GITHUB_USER'."
-  echo "  Check that GITHUB_USER is correct and you have network access."
-  exit 1
-}
+echo "Fetching SSH keys from https://github.com/$GITHUB_USER.keys..."
+BOT_KEYS=$(curl -fsSL "https://github.com/$GITHUB_USER.keys" 2>/dev/null) || true
+if [ -n "$BOT_KEYS" ]; then
+  KEY_COUNT=$(echo "$BOT_KEYS" | wc -l | tr -d ' ')
+  echo "  Found $KEY_COUNT key(s) for $GITHUB_USER."
+  KEYS="$BOT_KEYS"
+fi
 
-if [ -z "$KEYS" ]; then
-  if [ -n "${BOT_SSH_PUBLIC_KEY:-}" ]; then
-    echo "  No keys on GitHub — using BOT_SSH_PUBLIC_KEY from .env."
-    KEYS="$BOT_SSH_PUBLIC_KEY"
-  else
-    echo "  ERROR: No SSH keys found for GitHub user '$GITHUB_USER'"
-    echo "  and BOT_SSH_PUBLIC_KEY is not set in .env."
-    exit 1
+# Also fetch admin user's keys so they can SSH into the bot
+if [ -n "${ADMIN_GITHUB_USER:-}" ] && [ "$ADMIN_GITHUB_USER" != "$GITHUB_USER" ]; then
+  echo "Fetching SSH keys from https://github.com/$ADMIN_GITHUB_USER.keys..."
+  ADMIN_KEYS=$(curl -fsSL "https://github.com/$ADMIN_GITHUB_USER.keys" 2>/dev/null) || true
+  if [ -n "$ADMIN_KEYS" ]; then
+    ADMIN_KEY_COUNT=$(echo "$ADMIN_KEYS" | wc -l | tr -d ' ')
+    echo "  Found $ADMIN_KEY_COUNT key(s) for $ADMIN_GITHUB_USER."
+    if [ -n "$KEYS" ]; then
+      KEYS="$KEYS"$'\n'"$ADMIN_KEYS"
+    else
+      KEYS="$ADMIN_KEYS"
+    fi
   fi
 fi
 
-KEY_COUNT=$(echo "$KEYS" | wc -l | tr -d ' ')
-echo "  Found $KEY_COUNT key(s) for $GITHUB_USER."
+# Fallback to .env key if nothing found
+if [ -z "$KEYS" ]; then
+  if [ -n "${BOT_SSH_PUBLIC_KEY:-}" ]; then
+    echo "  No keys from GitHub — using BOT_SSH_PUBLIC_KEY from .env."
+    KEYS="$BOT_SSH_PUBLIC_KEY"
+  else
+    echo "  ERROR: No SSH keys found. Set GITHUB_USER, ADMIN_GITHUB_USER,"
+    echo "  or BOT_SSH_PUBLIC_KEY in .env."
+    exit 1
+  fi
+fi
 
 # Set up SSH directory and authorized_keys for bot user
 echo "Setting up SSH keys for '$BOT_USER'..."

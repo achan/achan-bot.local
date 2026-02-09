@@ -35,7 +35,10 @@ else
 fi
 
 echo ""
-echo "Public key (add this to https://github.com/settings/keys for $GITHUB_USER):"
+echo "Public key for $GITHUB_USER:"
 echo "---"
 sudo cat "$KEY_FILE.pub"
 echo "---"
+echo ""
+echo "Add this key to GitHub → https://github.com/settings/ssh/new"
+echo "Title: $BOT_USER@$(hostname)"

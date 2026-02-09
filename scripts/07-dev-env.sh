@@ -1,6 +1,19 @@
 #!/bin/bash
 set -euo pipefail
 
+# Source .env if vars aren't already exported (e.g. when running standalone)
+if [ -z "${BOT_USER:-}" ]; then
+  SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+  ENV_FILE="${SCRIPT_DIR}/../.env"
+  if [ ! -f "$ENV_FILE" ]; then
+    echo "Error: .env not found. Copy .env.example to .env and edit it."
+    exit 1
+  fi
+  set -a
+  source "$ENV_FILE"
+  set +a
+fi
+
 : "${BOT_USER:?BOT_USER not set — source .env}"
 
 # Ensure brew is on PATH

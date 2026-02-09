@@ -10,6 +10,16 @@ if [ -f "$HOME/.botenv" ]; then
   source "$HOME/.botenv"
 fi
 
+# Terminal — fix key handling over SSH
+bindkey -e
+bindkey '^?' backward-delete-char
+bindkey '^H' backward-delete-char
+bindkey '^[[3~' delete-char
+bindkey '^[[H' beginning-of-line
+bindkey '^[[F' end-of-line
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;5D' backward-word
+
 # History
 HISTSIZE=10000
 SAVEHIST=10000

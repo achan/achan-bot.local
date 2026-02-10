@@ -85,7 +85,7 @@ Create the `claude` user and open SSH access.
    - Home directory at `/Users/claude`
    - Add to `staff` group (Homebrew access)
    - Shell set to `/bin/zsh`
-   - Create `~/src/` directory
+   - Create `~/repos/` directory
 5. **Enable SSH (Remote Login)**
    - `systemsetup -setremotelogin on`
    - Allow the `claude` user to connect via SSH

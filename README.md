@@ -37,7 +37,7 @@ Copy `.env.example` to `.env` and fill in:
 | `BOT_USER` | | Non-admin user to create (default: `claude`) |
 | `BOT_USER_FULLNAME` | | Display name (default: `Claude`) |
 | `BOT_HOSTNAME` | | Hostname for display (default: `achan-bot.local`) |
-| `WORKSPACE_DIR` | | Project directory under home (default: `src`) |
+| `WORKSPACE_DIR` | | Project directory under home (default: `repos`) |
 
 See `.env.example` for the full list including cert configuration.
 
@@ -48,7 +48,7 @@ See `.env.example` for the full list including cert configuration.
 | `01-xcode-cli.sh` | Install Xcode Command Line Tools |
 | `02-homebrew.sh` | Install or update Homebrew |
 | `03-packages.sh` | Install packages from Brewfile |
-| `04-create-user.sh` | Create non-admin bot user with `~/src/` |
+| `04-create-user.sh` | Create non-admin bot user with `~/repos/` |
 | `05-ssh.sh` | Enable Remote Login, fetch SSH keys from GitHub |
 | `06-dotfiles.sh` | Symlink dotfiles, set git identity from GitHub |
 | `07-dev-env.sh` | Verify all tools are installed |

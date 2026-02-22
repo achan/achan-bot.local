@@ -14,6 +14,13 @@ if [ -z "${BOT_USER:-}" ]; then
   set +a
 fi
 
+: "${BOT_TYPE:=remote}"
+
+if [ "$BOT_TYPE" = "local" ]; then
+  echo "BOT_TYPE=local — skipping SSH server configuration."
+  exit 0
+fi
+
 : "${BOT_USER:?BOT_USER not set — source .env}"
 : "${GITHUB_USER:?GITHUB_USER not set — source .env}"
 

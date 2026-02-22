@@ -26,7 +26,9 @@ if ! groups | grep -q admin; then
   exit 1
 fi
 
-echo "=== $BOT_HOSTNAME setup ==="
+: "${BOT_TYPE:=remote}"
+
+echo "=== Bot setup ($BOT_TYPE) ==="
 echo "Running as: $(whoami)"
 echo "Bot user:   $BOT_USER"
 echo ""
@@ -40,7 +42,14 @@ done
 echo "=== Setup complete ==="
 echo ""
 echo "Next steps:"
-echo "  1. SSH in with port forwarding:"
-echo "     ssh -L 3000:localhost:3000 -L 4000:localhost:4000 $BOT_USER@$BOT_HOSTNAME"
-echo ""
-echo "  2. Start working in tmux."
+if [ "$BOT_TYPE" = "local" ]; then
+  echo "  1. Switch to the bot user:"
+  echo "     su - $BOT_USER"
+  echo ""
+  echo "  2. Start working in tmux."
+else
+  echo "  1. SSH in with port forwarding:"
+  echo "     ssh -L 3000:localhost:3000 -L 4000:localhost:4000 $BOT_USER@$BOT_HOSTNAME"
+  echo ""
+  echo "  2. Start working in tmux."
+fi

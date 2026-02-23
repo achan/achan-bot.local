@@ -10,6 +10,9 @@ brew "neovim"
 brew "ripgrep"
 brew "fd"
 
+# Ruby
+brew "rbenv"
+brew "ruby-build"
 
 # Claude Code
 cask "claude-code"

@@ -67,8 +67,9 @@ achan-bot.local/
 │   ├── 04-create-user.sh     # Create non-admin 'claude' user
 │   ├── 05-ssh.sh             # Enable Remote Login (remote only — skipped for local)
 │   ├── 06-dotfiles.sh        # Deploy dotfiles for claude user
-│   ├── 07-dev-env.sh         # Verify tools, PATH setup
-│   └── 08-mkcert.sh          # Generate localhost TLS certs for claude user
+│   ├── 07-rbenv.sh            # Install Ruby via rbenv
+│   ├── 08-dev-env.sh         # Verify tools, PATH setup
+│   └── 09-mkcert.sh          # Generate localhost TLS certs for claude user
 ├── dotfiles/
 │   ├── zshrc                 # Shell config (PATH, aliases)
 │   ├── gitconfig             # Git config
@@ -89,7 +90,7 @@ Run as the admin user. Installs system-level tooling.
    - CLI: `git`, `gh`, `jq`, `curl`, `wget`, `tmux`, `neovim`, `ripgrep`, `fd`
    - Casks: `claude-code`
    - TLS: `mkcert`, `nss` (for cert trust)
-   - Runtimes: none — managed per-project
+   - Ruby: `rbenv`, `ruby-build`
 
 ### Phase 2 — User & Access (scripts 04–05)
 
@@ -106,7 +107,7 @@ Create the bot user and (for remote bots) open SSH access.
    - Allow the `claude` user to connect via SSH
    - Deploy authorized_keys for the `claude` user
 
-### Phase 3 — Environment (scripts 06–08)
+### Phase 3 — Environment (scripts 06–09)
 
 Configure the `claude` user's environment.
 
@@ -114,12 +115,16 @@ Configure the `claude` user's environment.
    - `.zshrc` — PATH (include Homebrew), aliases, prompt
    - `.tmux.conf` — sensible defaults, status bar
    - `.gitconfig` — name, email, default branch
-7. **Dev environment** (run as `claude` user via `sudo -u claude`)
+7. **rbenv** — Install latest stable Ruby for the `claude` user
+   - Installs via `rbenv install` (latest stable version)
+   - Sets as global default via `rbenv global`
+   - Dotfiles `.zshrc` already initializes rbenv if present
+8. **Dev environment** (run as `claude` user via `sudo -u claude`)
    - Claude Code already installed via Brewfile (`brew install --cask claude-code`)
    - Verify `claude` command works
    - Ensure Homebrew-installed tools are on PATH
-   - Runtimes (node, ruby, etc.) are managed per-project, not installed globally
-8. **mkcert setup** (run as `claude` user)
+   - Verify rbenv Ruby is installed and available
+9. **mkcert setup** (run as `claude` user)
    - `mkcert -install` (install local CA)
    - `mkcert localhost 127.0.0.1 ::1` (generate cert + key)
    - Store certs in `~/.local/share/mkcert/` (or similar well-known path)

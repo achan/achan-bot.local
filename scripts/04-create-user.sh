@@ -61,3 +61,25 @@ fi
 
 sudo -u "$BOT_USER" mkdir -p "$BOT_HOME/$WORKSPACE_DIR"
 echo "Workspace directory ready: $BOT_HOME/$WORKSPACE_DIR/"
+
+# Allow the admin user to su to the bot user without a password
+ADMIN_USER="$(whoami)"
+SUDOERS_FILE="/etc/sudoers.d/bot-su-${BOT_USER}"
+SUDOERS_RULE="$ADMIN_USER ALL=(ALL) NOPASSWD: /usr/bin/su - $BOT_USER"
+
+if [ -f "$SUDOERS_FILE" ] && grep -qF "$SUDOERS_RULE" "$SUDOERS_FILE"; then
+  echo "Passwordless su already configured for '$ADMIN_USER' -> '$BOT_USER'."
+else
+  echo "$SUDOERS_RULE" | sudo tee "$SUDOERS_FILE" >/dev/null
+  sudo chmod 0440 "$SUDOERS_FILE"
+  echo "Passwordless su configured: subot"
+fi
+
+# Install a convenience script so the admin can just type 'subot'
+SUBOT="/usr/local/bin/subot"
+sudo tee "$SUBOT" >/dev/null <<EOF
+#!/bin/sh
+exec sudo /usr/bin/su - $BOT_USER
+EOF
+sudo chmod 755 "$SUBOT"
+echo "Installed $SUBOT"

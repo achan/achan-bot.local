@@ -32,17 +32,14 @@ sudo -u "$BOT_USER" stow --dir="$DOTFILES_DIR" --target="$BOT_HOME" --adopt "${S
 sudo -u "$BOT_USER" stow --dir="$DOTFILES_DIR" --target="$BOT_HOME" --restow "${STOW_PACKAGES[@]}"
 echo "  Stowed: ${STOW_PACKAGES[*]}"
 
-# Install Ghostty terminfo if available (fixes key handling over SSH from Ghostty)
-GHOSTTY_TERMINFO="/Applications/Ghostty.app/Contents/Resources/terminfo"
-if [ -d "$GHOSTTY_TERMINFO" ]; then
-  echo "Installing Ghostty terminfo..."
-  sudo -u "$BOT_USER" mkdir -p "$BOT_HOME/.terminfo"
-  sudo cp -r "$GHOSTTY_TERMINFO"/* "$BOT_HOME/.terminfo/"
-  sudo chown -R "$BOT_USER":staff "$BOT_HOME/.terminfo"
+# Install Ghostty terminfo if available (fixes key handling over SSH/su from Ghostty)
+if infocmp xterm-ghostty &>/dev/null; then
+  echo "Installing Ghostty terminfo for '$BOT_USER'..."
+  infocmp -x xterm-ghostty | sudo -u "$BOT_USER" tic -x -o "$BOT_HOME/.terminfo" -
   echo "  Ghostty terminfo installed."
 else
-  echo "  Ghostty not found — skipping terminfo install."
-  echo "  (SSH from Ghostty will fall back to xterm-256color.)"
+  echo "  Ghostty terminfo not found — skipping."
+  echo "  (Sessions from Ghostty will fall back to xterm-256color.)"
 fi
 
 echo "Dotfiles deployed."

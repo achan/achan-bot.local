@@ -1,8 +1,32 @@
 # achan-bot.local
 
-Provision a Mac mini as a dev/server box. One script sets up everything — then
-SSH in, work in tmux, run app servers, and test from your local browser over
-HTTPS.
+Provision a Mac bot user — either a **remote** bot you SSH into (e.g. on a
+Mac mini) or a **local** Standard user on the same machine. One script sets
+up everything.
+
+## Bot types
+
+| Type | Description | Use case |
+|------|-------------|----------|
+| `remote` (default) | Enables SSH, fetches authorized keys, configures Remote Login | Dedicated Mac mini you SSH into from another machine |
+| `local` | Skips SSH setup entirely | Standard user on your own Mac for isolated work |
+
+Set `BOT_TYPE` in `.env` to choose.
+
+## Quick start
+
+Logged in as your admin user:
+
+```bash
+git clone <this-repo>
+cd achan-bot.local
+cp .env.example .env
+# Edit .env — at minimum set GITHUB_USER and BOT_TYPE
+vi .env
+./setup.sh
+```
+
+### Remote bot
 
 ```
 ┌──────────────────────┐  SSH tunnel   ┌──────────────────────────────┐
@@ -14,17 +38,15 @@ HTTPS.
 └──────────────────────┘              └──────────────────────────────┘
 ```
 
-## Quick start
+```bash
+ssh -L 3000:localhost:3000 -L 4000:localhost:4000 claude@achan-bot.local
+```
 
-On the Mac mini, logged in as your admin user:
+### Local bot
 
 ```bash
-git clone <this-repo>
-cd achan-bot.local
-cp .env.example .env
-# Edit .env — at minimum set GITHUB_USER
-vi .env
-./setup.sh
+su - claude
+# Work in tmux, run app servers, etc.
 ```
 
 ## Configuration
@@ -33,10 +55,13 @@ Copy `.env.example` to `.env` and fill in:
 
 | Variable | Required | Description |
 |---|---|---|
-| `GITHUB_USER` | yes | Your GitHub username — SSH keys and git identity are fetched automatically |
+| `BOT_TYPE` | | `remote` (default) or `local` |
+| `GITHUB_USER` | yes | GitHub username — SSH keys and git identity are fetched automatically |
+| `ADMIN_GITHUB_USER` | | GitHub username of admin/owner for SSH access (remote only) |
 | `BOT_USER` | | Non-admin user to create (default: `claude`) |
 | `BOT_USER_FULLNAME` | | Display name (default: `Claude`) |
-| `BOT_HOSTNAME` | | Hostname for display (default: `achan-bot.local`) |
+| `BOT_HOSTNAME` | | Hostname for display (default: `achan-bot.local`) (remote only) |
+| `BOT_SSH_PUBLIC_KEY` | | Fallback SSH public key for authorized_keys (remote only) |
 | `WORKSPACE_DIR` | | Project directory under home (default: `repos`) |
 
 See `.env.example` for the full list including cert configuration.
@@ -49,7 +74,7 @@ See `.env.example` for the full list including cert configuration.
 | `02-homebrew.sh` | Install or update Homebrew |
 | `03-packages.sh` | Install packages from Brewfile |
 | `04-create-user.sh` | Create non-admin bot user with `~/repos/` |
-| `05-ssh.sh` | Enable Remote Login, fetch SSH keys from GitHub |
+| `05-ssh.sh` | Enable Remote Login, fetch SSH keys from GitHub (remote only — skipped for local) |
 | `06-dotfiles.sh` | Symlink dotfiles, set git identity from GitHub |
 | `07-dev-env.sh` | Verify all tools are installed |
 | `08-mkcert.sh` | Generate trusted localhost TLS certs |
@@ -63,7 +88,7 @@ From the Brewfile: `git`, `gh`, `jq`, `curl`, `wget`, `tmux`, `neovim`,
 
 Runtimes (node, ruby, python, etc.) are managed per-project, not globally.
 
-## Connecting
+## Connecting (remote)
 
 From achan.local, SSH in with port forwarding for your app servers:
 
@@ -80,8 +105,8 @@ The setup generates locally-trusted TLS certs via mkcert. App servers use
 these certs (exposed as `$LOCALHOST_CERT` and `$LOCALHOST_KEY` env vars)
 to serve HTTPS.
 
-**One-time step on achan.local** — trust the CA so your browser accepts
-the certs:
+**One-time step on achan.local** (remote only) — trust the CA so your browser
+accepts the certs:
 
 ```bash
 scp claude@achan-bot.local:~/.local/share/mkcert/rootCA.pem /tmp/

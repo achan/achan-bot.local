@@ -24,7 +24,7 @@ BOT_HOME="/Users/$BOT_USER"
 
 echo "Deploying dotfiles for '$BOT_USER' via stow..."
 
-STOW_PACKAGES=(zsh git tmux)
+STOW_PACKAGES=(zsh git tmux nvim)
 
 # Adopt any existing files so stow doesn't conflict, then restow to ensure
 # symlinks point back to the dotfiles repo.

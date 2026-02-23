@@ -27,7 +27,7 @@ echo "Setting up SSH keypair for '$BOT_USER'..."
 sudo -u "$BOT_USER" mkdir -p "$SSH_DIR"
 sudo chmod 700 "$SSH_DIR"
 
-if [ -f "$KEY_FILE" ]; then
+if sudo test -f "$KEY_FILE"; then
   echo "SSH key already exists at $KEY_FILE — skipping."
 else
   sudo -u "$BOT_USER" ssh-keygen -t ed25519 -C "$GITHUB_USER" -f "$KEY_FILE" -N ""

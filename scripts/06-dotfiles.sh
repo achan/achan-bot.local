@@ -28,8 +28,8 @@ STOW_PACKAGES=(zsh git tmux)
 
 # Adopt any existing files so stow doesn't conflict, then restow to ensure
 # symlinks point back to the dotfiles repo.
-sudo -u "$BOT_USER" stow --dir="$DOTFILES_DIR" --target="$BOT_HOME" --adopt "${STOW_PACKAGES[@]}" 2>/dev/null || true
-sudo -u "$BOT_USER" stow --dir="$DOTFILES_DIR" --target="$BOT_HOME" --restow "${STOW_PACKAGES[@]}"
+sudo -u "$BOT_USER" stow --no-folding --dir="$DOTFILES_DIR" --target="$BOT_HOME" --adopt "${STOW_PACKAGES[@]}" 2>/dev/null || true
+sudo -u "$BOT_USER" stow --no-folding --dir="$DOTFILES_DIR" --target="$BOT_HOME" --restow "${STOW_PACKAGES[@]}"
 echo "  Stowed: ${STOW_PACKAGES[*]}"
 
 # Install Ghostty terminfo if available (fixes key handling over SSH/su from Ghostty)

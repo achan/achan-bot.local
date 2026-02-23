@@ -76,17 +76,19 @@ See `.env.example` for the full list including cert configuration.
 | `04-create-user.sh` | Create non-admin bot user with `~/repos/` |
 | `05-ssh.sh` | Enable Remote Login, fetch SSH keys from GitHub (remote only — skipped for local) |
 | `06-dotfiles.sh` | Symlink dotfiles, set git identity from GitHub |
-| `07-dev-env.sh` | Verify all tools are installed |
-| `08-mkcert.sh` | Generate trusted localhost TLS certs |
+| `07-rbenv.sh` | Install latest stable Ruby via rbenv |
+| `08-dev-env.sh` | Verify all tools are installed |
+| `09-mkcert.sh` | Generate trusted localhost TLS certs |
 
 All scripts are idempotent — safe to re-run.
 
 ## Installed tools
 
 From the Brewfile: `git`, `gh`, `jq`, `curl`, `wget`, `tmux`, `neovim`,
-`ripgrep`, `fd`, `mkcert`, `nss`, and `claude-code` (cask).
+`ripgrep`, `fd`, `rbenv`, `ruby-build`, `mkcert`, `nss`, and `claude-code` (cask).
 
-Runtimes (node, ruby, python, etc.) are managed per-project, not globally.
+Ruby is managed via rbenv — the latest stable version is installed globally
+for the bot user. Other runtimes (node, python, etc.) are managed per-project.
 
 ## Connecting (remote)
 
